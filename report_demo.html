@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基于大语言模型的智能对话助手设计与实现</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>基于大语言模型的智能对话助手设计与实现</h1>
+    </header>
+
+    <div class="container">
+        <nav class="toc">
+            <h2>目录</h2>
+            <ul>
+                <li><a href="#demo">完整功能demo</a></li>
+                <li><a href="#description">选题描述</a></li>
+                <li><a href="#design">方案设计</a></li>
+                <li><a href="#modules">代码模块</a></li>
+                <li><a href="#results">实现效果</a></li>
+                <li><a href="#summary">总结与展望</a></li>
+                <li><a href="#references">参考资料</a></li>
+            </ul>
+        </nav>
+
+        <main>
+            <section id="demo" class="animated-section">
+                <h2>完整功能demo</h2>
+                <figure>
+                    <video controls>
+                        <source src="课程作业demo.mp4" type="video/mp4">
+                        您的浏览器不支持 Video 标签。
+                    </video>
+                    <figcaption>完整功能演示视频</figcaption>
+                </figure>
+            </section>
+
+            <section id="description" class="animated-section">
+                <h2>选题描述</h2>
+                <p>本课程设计旨在设计并实现一个基于大语言模型（LLM）的智能对话助手，该助手不仅具备基本的对话能力，还能通过工具增强功能访问外部数据和服务，实现更加智能化的交互体验。具体来说，该项目实现了以下功能：</p>
+                <ol>
+                    <li>基于大语言模型的自然语言对话能力</li>
+                    <li>工具增强型Agent架构，支持工具调用</li>
+                    <li>实时获取时间、天气等外部信息的能力</li>
+                    <li>基于JSON数据的电影信息和评论查询功能</li>
+                    <li>前后端分离的Web应用，支持流式输出</li>
+                </ol>
+            </section>
+
+            <section id="design" class="animated-section">
+                <h2>方案设计</h2>
+                <article class="animated-section">
+                    <h3>整体架构</h3>
+                    <p>本项目采用前后端分离的架构，主要包含以下组件：</p>
+                    <ol>
+                        <li><strong>前端</strong>：使用HTML、CSS和JavaScript构建的简洁但是<strong>美观</strong>的Web界面，负责用户交互和对话展示</li>
+                        <li><strong>后端</strong>：基于FastAPI的Web服务器，处理前端请求并与LLM交互</li>
+                        <li><strong>智能Agent</strong>：基于<a href="https://python.langchain.com/" target="_blank"><strong>LangChain</strong></a>框架构建的工具增强型Agent，整合LLM和外部工具</li>
+                        <li><strong>工具集</strong>：包括时间获取、天气查询和电影数据查询等功能模块</li>
+                    </ol>
+                </article>
+                <article class="animated-section">
+                    <h3>技术选型</h3>
+                    <ol>
+                        <li><strong>大语言模型</strong>：提供了7个不同的模型，通过API接口调用</li>
+                        <li><strong>框架与库</strong>：
+                            <ul>
+                                <li>LangChain：用于构建智能Agent和工具集成</li>
+                                <li>FastAPI：构建高性能Web API</li>
+                                <li>Pydantic：数据验证与接口规范</li>
+                                <li>Jinja2：HTML模板渲染</li>
+                            </ul>
+                        </li>
+                        <li><strong>数据存储</strong>：本地JSON文件存储电影信息和评论数据</li>
+                        <li><strong>通信方式</strong>：HTTP协议，支持SSE流式响应</li>
+                    </ol>
+                </article>
+                <article class="animated-section">
+                    <h3>工具设计</h3>
+                    <ol>
+                        <li><strong>时间工具</strong>：获取当前系统时间。该功能通过调用 <code>datetime.now().strftime("%Y-%m-%d %H:%M:%S")</code> 实现，无需任何输入参数，直接返回格式化的当前日期和时间字符串。</li>
+                        <li><strong>天气工具</strong>：通过调用<a href="https://openweathermap.org/api" target="_blank"><strong>OpenWeatherMap</strong></a> API获取实时天气信息。该工具需要一个地点参数（如 <code>Beijing</code> 或 <code>London,UK</code>，必须为英文），并利用 <code>OpenWeatherMapAPIWrapper</code> 与API交互，返回指定地点的天气数据。使用此工具前需在环境变量中设置 <code>OPENWEATHERMAP_API_KEY</code>。</li>
+                        <li><strong>数据工具</strong>：基于本地JSON文件的电影信息查询，主要依赖 <code>JSONDataProcessor</code> 类进行数据加载和处理。它提供了以下几个具体功能：
+                            <ul>
+                                <li>电影条件查询：允许根据电影的字段（如导演、演员、类型、评分等）及其对应值和操作符（如等于、大于、包含等）来筛选电影。可以指定返回的字段和结果数量。</li>
+                                <li>电影评论获取：根据电影的豆瓣ID获取其所有相关评论。可以指定返回评论的特定字段和数量。</li>
+                                <li>评论内容搜索：允许根据评论内容的字段（如评论正文、评分、作者等）及其对应值和操作符来搜索评论。可以指定返回的字段和结果数量，并会一并返回评论所属的电影基本信息。</li>
+                                <li>数据聚合分析：对电影数据进行统计分析，支持的操作包括计算平均值（avg）、计数（count）、求和（sum）、最大值（max）、最小值（min），可以按指定字段进行聚合，并支持按另一字段进行分组。</li>
+                            </ul>
+                        </li>
+                    </ol>
+                </article>
+            </section>
+
+            <section id="modules" class="animated-section">
+                <h2>代码模块功能划分与描述</h2>
+                <article class="animated-section">
+                    <h3>1. 后端服务模块</h3>
+                    <p>后端服务模块位于<code>src/backend/main.py</code>，负责处理HTTP请求、管理Agent实例，并提供流式响应。主要功能包括：</p>
+                    <ul>
+                        <li>FastAPI应用配置与初始化</li>
+                        <li>静态资源与模板配置</li>
+                        <li>流式响应处理</li>
+                        <li>Chat Agent实例管理</li>
+                    </ul>
+                    <p>核心接口包括：</p>
+                    <ul>
+                        <li><code>/</code>：返回前端页面</li>
+                        <li><code>/api/chat</code>：处理聊天请求，返回流式响应</li>
+                    </ul>
+                </article>
+                <article class="animated-section">
+                    <h3>2. Agent模块</h3>
+                    <p>Agent模块位于<code>src/backend/agent/chat.py</code>，是系统的核心智能组件，负责整合LLM和工具调用。主要功能包括：</p>
+                    <ul>
+                        <li>基于LangChain构建工具增强型Agent</li>
+                        <li>管理对话历史记忆</li>
+                        <li>处理工具调用与响应</li>
+                        <li>提供流式输出接口</li>
+                    </ul>
+                    <p>Agent的核心设计包括：</p>
+                    <ul>
+                        <li>ConversationBufferWindowMemory用于管理对话历史</li>
+                        <li>基于OpenAI工具格式的Agent执行器</li>
+                        <li>异步流式响应处理</li>
+                    </ul>
+                </article>
+                <article class="animated-section">
+                    <h3>3. 工具模块</h3>
+                    <p>工具模块位于<code>src/backend/agent/tools</code>目录，包含多个工具实现：</p>
+                    <h4>3.1 时间工具 (<code>timegetting.py</code>)</h4>
+                    <p>提供获取当前时间的功能，便于Agent回答时间相关问题。其核心函数 <code>get_current_time</code> 使用Python的 <code>datetime</code> 模块获取当前时间，并格式化为 "YYYY-MM-DD HH:MM:SS" 字符串。该工具通过LangChain的 <code>StructuredTool.from_function</code> 包装，定义了输入模型 <code>TimeInput</code> (虽然实际并未使用其参数)。</p>
+                    <h4>3.2 天气工具 (<code>weather_tool.py</code>)</h4>
+                    <p>通过调用<a href="https://openweathermap.org/api" target="_blank"><strong>OpenWeatherMap</strong></a> API获取指定城市的天气信息。该工具的核心逻辑封装在 <code>_weather_query_with_logging</code> 函数中，它接收一个地点字符串作为输入。内部使用 <code>OpenWeatherMapAPIWrapper</code>（需要预先在环境变量中设置 <code>OPENWEATHERMAP_API_KEY</code>）来请求API，并返回天气数据。该工具通过LangChain的 <code>Tool</code> 类包装，并定义了输入模型 <code>WeatherQueryInput</code> 来规范输入参数（地点）。</p>
+                    <h4>3.3 数据查询工具 (<code>data_tool.py</code>)</h4>
+                    <p>基于本地JSON数据文件实现的电影信息查询工具，主要功能通过 <code>JSONDataProcessor</code> 类实现，该类负责加载和解析JSON数据。提供了多个独立的查询和分析函数，这些函数均被LangChain的 <code>@tool</code> 装饰器包装成独立的工具，并配有相应的Pydantic输入模型（如 <code>MovieQueryInput</code>, <code>MovieReviewInput</code>, <code>ReviewContentInput</code>, <code>AggregateInput</code>）来定义各工具的输入参数和类型。具体功能包括：</p>
+                    <ul>
+                        <li>电影条件查询 (<code>movie_query</code>)：根据指定的字段、值和操作符（如等于、大于、包含）从电影数据中筛选，可选择返回特定字段和限制结果数量。</li>
+                        <li>电影评论获取 (<code>movie_reviews</code>)：根据豆瓣ID获取电影的评论，可选择返回特定字段和限制评论数量。</li>
+                        <li>评论内容搜索 (<code>review_query</code>)：根据评论内容中的字段、值和操作符搜索相关评论，并返回评论及所属电影信息，可选择返回特定字段和限制结果数量。</li>
+                        <li>数据聚合分析 (<code>aggregate_data</code>)：对电影数据执行聚合操作（如平均值、计数、求和、最大/最小值），可按字段聚合，并可选按另一字段分组。</li>
+                    </ul>
+                    <p>该模块采用了面向对象设计，通过JSONDataProcessor类实现数据处理，并通过LangChain的Tool包装为可调用工具。</p>
+                </article>
+                <article class="animated-section">
+                    <h3>4. 前端界面模块</h3>
+                    <p>前端界面模块位于<code>src/frontend</code>目录，采用轻量级设计，主要包括：</p>
+                    <ul>
+                        <li>HTML模板：定义对话界面结构</li>
+                        <li>CSS样式：界面美化与响应式设计</li>
+                        <li>JavaScript：处理用户输入、发送请求、接收流式响应</li>
+                    </ul>
+                </article>
+            </section>
+
+            <section id="results" class="animated-section">
+                <h2>实现效果</h2>
+                <article class="animated-section">
+                    <h3>1. 基本对话功能</h3>
+                    <p>系统能够进行自然流畅的对话交互，回答用户提问并保持上下文理解。</p>
+                    <figure>
+                        <img src="基本对话功能.png" alt="基本对话功能演示">
+                        <figcaption>基本对话功能演示</figcaption>
+                    </figure>
+                </article>
+                <article class="animated-section">
+                    <h3>2. 时间查询功能</h3>
+                    <p>系统能够实时回答关于当前时间、日期的问题。</p>
+                    <figure>
+                        <img src="时间获取.png" alt="时间查询功能演示">
+                        <figcaption>时间查询功能演示</figcaption>
+                    </figure>
+                </article>
+                <article class="animated-section">
+                    <h3>3. 天气查询功能</h3>
+                    <p>系统能够查询并返回指定城市的天气信息。</p>
+                    <figure>
+                        <img src="天气查询功能.png" alt="天气查询功能演示">
+                        <figcaption>天气查询功能演示</figcaption>
+                    </figure>
+                </article>
+                <article class="animated-section">
+                    <h3>4. 电影信息查询功能</h3>
+                    <p>系统能够根据用户需求查询电影信息，如导演、演员、评分等。</p>
+                    <figure>
+                        <img src="电影信息查询功能.png" alt="电影信息查询功能演示">
+                        <figcaption>电影信息查询功能演示</figcaption>
+                    </figure>
+                </article>
+                <article class="animated-section">
+                    <h3>5. 电影评论分析功能</h3>
+                    <p>系统能够获取并分析电影评论，提供洞察。</p>
+                    <figure>
+                        <img src="电影评论分析功能.png" alt="电影评论分析功能演示">
+                        <figcaption>电影评论分析功能演示</figcaption>
+                    </figure>
+                </article>
+            </section>
+
+            <section id="summary" class="animated-section">
+                <h2>总结与展望</h2>
+                <p>本项目成功实现了一个基于大语言模型的智能对话助手，通过工具增强的方式扩展了模型的能力边界。系统不仅能够进行自然语言对话，还能获取实时信息、查询专业数据。</p>
+                <p>未来可进一步扩展的方向包括：</p>
+                <ol>
+                    <li>增加更多工具支持，如地图导航、日历管理等</li>
+                    <li>优化对话记忆机制，提升长对话能力</li>
+                    <li>增强前端界面，支持更丰富的交互方式</li>
+                    <li>实现更复杂的推理链和思维框架</li>
+                    <li>提供个性化配置选项，满足不同用户需求</li>
+                </ol>
+            </section>
+
+            <section id="references" class="animated-section">
+                <h2>参考资料</h2>
+                <ol>
+                    <li>LangChain文档: <a href="https://python.langchain.com/" target="_blank">https://python.langchain.com/</a></li>
+                    <li>FastAPI文档: <a href="https://fastapi.tiangolo.com/" target="_blank">https://fastapi.tiangolo.com/</a></li>
+                    <li>OpenWeatherMap API文档: <a href="https://openweathermap.org/api" target="_blank">https://openweathermap.org/api</a></li>
+                </ol>
+            </section>
+        </main>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 智能对话助手课程设计. 保留所有权利.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const animatedSections = document.querySelectorAll('.animated-section');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        // Optional: unobserve after animation
+                        // observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 }); // Adjust threshold as needed
+
+            animatedSections.forEach(section => {
+                observer.observe(section);
+            });
+        });
+    </script>
+
+</body>
+</html> 
